@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Rol {
+  idrol    Int       @id @default(autoincrement()) @map("IDrol") @db.TinyInt
+  nombre   String    @map("Nombre") @db.VarChar(50)
+  usuarios Usuario[]
+
+  @@map("Rol")
+}
+
+model Estado {
+  idestado    Int          @id @default(autoincrement()) @map("IDestado")
+  nombre      String       @map("Nombre") @db.VarChar(100)
+  municipios  Municipio[]
+  gasolineras Gasolinera[]
+
+  @@map("Estado")
+}
+
+model Municipio {
+  idMunicipio Int         @id @default(autoincrement()) @map("IDMunicipio")
+  idEstado    Int         @map("IDEstado")
+  nombre      String      @map("Nombre") @db.VarChar(150)
+  estado      Estado      @relation(fields: [idEstado], references: [idestado], onUpdate: Cascade, onDelete: Restrict)
+  gasolineras Gasolinera[]
+
+  @@map("Municipio")
+}
+
+model TipoVehiculo {
+  idtipo    Int        @id @default(autoincrement()) @map("IDtipo")
+  nombre    String     @map("Nombre") @db.VarChar(50)
+  imagen    String?    @map("Imagen") @db.VarChar(255)
+  vehiculos Vehiculo[]
+
+  @@map("Tipo_Vehiculo")
+}
+
+model MarcaVehiculo {
+  idMarca   Int              @id @default(autoincrement()) @map("IDMarca")
+  nombre    String           @map("Nombre") @db.VarChar(100)
+  modelos   ModeloVehiculo[]
+  vehiculos Vehiculo[]
+
+  @@map("Marca_Vehiculo")
+}
+
+model ModeloVehiculo {
+  idmodelo  Int           @id @default(autoincrement()) @map("IDmodelo")
+  idMarca   Int           @map("IDMarca")
+  nombre    String        @map("Nombre") @db.VarChar(100)
+  anio      Int           @map("Anio") @db.Year
+  marca     MarcaVehiculo @relation(fields: [idMarca], references: [idMarca], onUpdate: Cascade, onDelete: Restrict)
+  vehiculos Vehiculo[]
+
+  @@unique([idMarca, nombre, anio], map: "uq_modelo_marca_anio")
+  @@index([idMarca], map: "fk_modelo_marca")
+  @@map("Modelo_Vehiculo")
+}
+
+model Usuario {
+  idusuario        String             @id @map("IDusuario") @db.VarChar(50)
+  username         String             @unique @map("Username") @db.VarChar(40)
+  nombre           String             @map("Nombre") @db.VarChar(40)
+  apellidoPaterno  String?            @map("Apellido_Paterno") @db.VarChar(50)
+  apellidoMaterno  String?            @map("Apellido_Materno") @db.VarChar(50)
+  correo           String             @unique @map("Correo") @db.VarChar(150)
+  contrasena       String             @map("Contrasena") @db.VarChar(255)
+  estatus          Int                @default(1) @map("Estatus") @db.TinyInt
+  idrol            Int                @map("IDrol") @db.TinyInt
+  rol              Rol                @relation(fields: [idrol], references: [idrol], onUpdate: Cascade, onDelete: Restrict)
+  puntuaciones     Puntuacion[]
+  usuarioVehiculos UsuarioVehiculo[]
+
+  @@map("Usuario")
+}
+
+model Vehiculo {
+  idvehiculo          Int                  @id @default(autoincrement()) @map("IDvehiculo")
+  idtipo              Int?                 @map("IDtipo")
+  idMarca             Int?                 @map("IDMarca")
+  idmodelo            Int?                 @map("IDmodelo")
+  rendimientoEstimado Decimal?             @map("Rendimiento_estimado") @db.Decimal(5, 2)
+  tipo                TipoVehiculo?        @relation(fields: [idtipo], references: [idtipo], onUpdate: Cascade, onDelete: SetNull)
+  marca               MarcaVehiculo?       @relation(fields: [idMarca], references: [idMarca], onUpdate: Cascade, onDelete: SetNull)
+  modelo              ModeloVehiculo?      @relation(fields: [idmodelo], references: [idmodelo], onUpdate: Cascade, onDelete: SetNull)
+  usuarioVehiculos    UsuarioVehiculo[]
+  puntuacionVehiculos PuntuacionVehiculo[]
+
+  @@map("Vehiculo")
+}
+
+model Gasolinera {
+  idgasolinera        Int                  @id @default(autoincrement()) @map("IDgasolinera")
+  nombre              String               @map("Nombre") @db.VarChar(150)
+  imagen              String?              @map("Imagen") @db.VarChar(255)
+  domicilio           String?              @map("Domicilio") @db.VarChar(255)
+  latitud             Decimal?             @map("Latitud") @db.Decimal(10, 7)
+  longitud            Decimal?             @map("Longitud") @db.Decimal(10, 7)
+  idEstado            Int?                 @map("IDEstado")
+  idMunicipio         Int?                 @map("IDMunicipio")
+  estado              Estado?              @relation(fields: [idEstado], references: [idestado], onUpdate: Cascade, onDelete: SetNull)
+  municipio           Municipio?           @relation(fields: [idMunicipio], references: [idMunicipio], onUpdate: Cascade, onDelete: SetNull)
+  puntuaciones        Puntuacion[]
+  puntuacionVehiculos PuntuacionVehiculo[]
+
+  @@map("Gasolinera")
+}
+
+model Puntuacion {
+  idpuntuacion        Int                  @id @default(autoincrement()) @map("IDpuntuacion")
+  idgasolinera        Int?                 @map("IDgasolinera")
+  idusuario           String?              @map("IDusuario") @db.VarChar(50)
+  puntuacion          Int?                 @map("Puntuacion") @db.UnsignedTinyInt
+  comentario          String?              @map("Comentario") @db.Text
+  estatus             Int                  @default(1) @map("Estatus") @db.TinyInt
+  fecha               DateTime             @default(now()) @map("Fecha") @db.DateTime(0)
+  gasolinera          Gasolinera?          @relation(fields: [idgasolinera], references: [idgasolinera], onUpdate: Cascade, onDelete: Cascade)
+  usuario             Usuario?             @relation(fields: [idusuario], references: [idusuario], onUpdate: Cascade, onDelete: Cascade)
+  puntuacionVehiculos PuntuacionVehiculo[]
+
+  @@map("Puntuacion")
+}
+
+model UsuarioVehiculo {
+  idusuario  String   @map("IDusuario") @db.VarChar(50)
+  idvehiculo Int      @map("IDvehiculo")
+  color      String?  @map("Color") @db.VarChar(50)
+  alias      String?  @map("Alias") @db.VarChar(100)
+  usuario    Usuario  @relation(fields: [idusuario], references: [idusuario], onUpdate: Cascade, onDelete: Cascade)
+  vehiculo   Vehiculo @relation(fields: [idvehiculo], references: [idvehiculo], onUpdate: Cascade, onDelete: Cascade)
+
+  @@id([idusuario, idvehiculo])
+  @@map("Usuario_Vehiculo")
+}
+
+model PuntuacionVehiculo {
+  idpuntuacion Int        @map("IDpuntuacion")
+  idvehiculo   Int        @map("IDvehiculo")
+  idgasolinera Int        @map("IDgasolinera")
+  puntuacion   Puntuacion @relation(fields: [idpuntuacion], references: [idpuntuacion], onUpdate: Cascade, onDelete: Cascade)
+  vehiculo     Vehiculo   @relation(fields: [idvehiculo], references: [idvehiculo], onUpdate: Cascade, onDelete: Cascade)
+  gasolinera   Gasolinera @relation(fields: [idgasolinera], references: [idgasolinera], onUpdate: Cascade, onDelete: Cascade)
+
+  @@id([idpuntuacion, idvehiculo, idgasolinera])
+  @@map("Puntuacion_Vehiculo")
+}
