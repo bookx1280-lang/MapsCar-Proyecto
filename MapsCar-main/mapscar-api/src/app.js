@@ -13,7 +13,11 @@ import adminCatalogos from "./routes/adminCatalogos.js";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: '*', // Permite peticiones de cualquier origen temporalmente para pruebas
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 app.get("/health", async (_req, res) => {
@@ -33,5 +37,8 @@ app.use("/api/vehiculos", vehiculos);
 app.use("/api/puntuaciones", puntuaciones);
 app.use("/api/admin/catalogos", adminCatalogos);
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));
+const PORT = process.env.PORT || 8080;
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`API running on port ${PORT}`);
+});
