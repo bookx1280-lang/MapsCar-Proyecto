@@ -27,6 +27,15 @@ pnpm-debug.log*
 .vite/
 .eslintcache
 
+# Local development / environment overrides
+*.local
+.env.local
+.env.*.local
+
+# Package manager cache
+.npm
+.yarn
+
 # SO / editor
 .DS_Store
 Thumbs.db
